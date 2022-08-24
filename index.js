@@ -14,11 +14,14 @@ var toiomin = [58, 60];
 
 var xmax = 308;
 var ymax = 212;
-let toiox = [0];
-let toioy = [0];
+// let toiox = [0];
+// let toioy = [0];
 
 var slider1 = document.getElementById("slider1");
 var speed1 = 0xFF;
+
+let activeRobot = 1;
+let robotActive = true;
 
   const SERVICE_UUID              = '10b20100-5b3b-4571-9508-cf3efcd7bbae';
   const MOVE_CHARCTERISTICS_UUID = '10b20102-5b3b-4571-9508-cf3efcd7bbae';
@@ -34,8 +37,9 @@ var speed1 = 0xFF;
           soundChar:undefined,
           moveChar:undefined,
           lightChar:undefined,
-          posChar: undefined
-
+          posChar: undefined,
+          xpos: [0],
+          ypos: [0]
       };
 
       // Scan only toio Core Cubes
@@ -48,12 +52,12 @@ var speed1 = 0xFF;
       navigator.bluetooth.requestDevice( options ).then( device => {
           cube.device = device;
           if( cube === gCubes[0] ){
+              console.log(cube);
               turnOnLightCian( cube );
               const cubeID = 1;
               changeConnectCubeButtonStatus( cubeID, undefined, true );
           }else if( cube === gCubes[1] ){
-              turnOnLightGreen( cube );
-              spinCube( cube );
+
               const cubeID = 2;
               changeConnectCubeButtonStatus( cubeID, undefined, true );
           }
@@ -79,11 +83,16 @@ var speed1 = 0xFF;
           if( cube === gCubes[0] ){
             turnOnLightCian( cube );
             spinCube( cube );
-            enableMoveButtons();
+            // enableMoveButtons();
           }else if( cube === gCubes[1] ){
             turnOnLightGreen( cube );
+            spinCube( cube );
+            // enableMoveButtons();
           }else{
             turnOnLightRed( cube );
+            spinCube( cube );
+            // spinCube( cube );
+            // enableMoveButtons();
           }
       });
 
@@ -150,7 +159,7 @@ var speed1 = 0xFF;
           cube.moveChar.writeValue( buf );
           console.log('spin');
       }
-          onStartButtonClick();
+          onStartButtonClick(cube);
 
   }
 
@@ -216,24 +225,32 @@ var speed1 = 0xFF;
       }
   }
 
-  function onStartButtonClick() {
+  function onStartButtonClick(cube) {
     const buf1 = new Uint8Array([ 0x18, 0x00, 0x01, 0x01 ]);
-    gCubes[0].posChar.writeValue(buf1);
+    cube.posChar.writeValue(buf1);
+    console.log(cube);
     //posCharacteristic = gCubes[0].posChar.readValue();
     //console.log(posCharacteristic);
-    return gCubes[0].posChar.startNotifications().then(_ => {
+    return cube.posChar.startNotifications().then(_ => {
       console.log('> Notifications started');
-      gCubes[0].posChar.addEventListener('characteristicvaluechanged',
-          handleNotifications);
-  })
+      if(cube == gCubes[0]){
+      cube.posChar.addEventListener('characteristicvaluechanged',
+          handleNotifications1);
+  }else if(cube == gCubes[1]){
+    cube.posChar.addEventListener('characteristicvaluechanged',
+        handleNotifications2);
+  }else{
+    cube.posChar.addEventListener('characteristicvaluechanged',
+        handleNotifications3);
+  }})
   .catch(error => {
     console.log('Argh! ' + error);
   });
 }
 
-function handleNotifications(event) {
+function handleNotifications1(event) {
   // let value = event.target.value;
-  // console.log(value);
+console.log("cube 1");
 
   let value = event.target.value;
 //  console.log(value);
@@ -247,48 +264,92 @@ for (let i = 0; i < value.byteLength; i++) {
 }
 
 console.log(a);
-var xoff = 32;
-xoff = toiomin[0];
-var yoff = 44;
-yoff = toiomin[1];
+cubePositionCalc(gCubes[0], a, value);
 
-if (toiox[0] != undefined){
-toiox[1] = toiox[0];
-toioy[1] = toioy[0];
-}
-
-toiox[0] = value.getInt16(1, true)-xoff;
-toioy[0] = value.getInt16(3, true)-yoff;
-
-var xpos = (value.getInt16(1, true)).toString();
-var ypos = (value.getInt16(3, true)).toString();
-var angle = value.getInt16(5, true).toString();
-//console.log("x: ", xpos, "y: ", ypos, "angle: ", angle);
-document.getElementById("xpos").innerHTML = "x position: " + xpos;
-document.getElementById("ypos").innerHTML = "y position: " + ypos;
-document.getElementById("angle").innerHTML = "angle (degrees): " + angle;
-
-console.log(xpos);
-console.log(ypos);
-
-drawToio();
+drawToio(0);
 //console.log('> ' + a.join(' '));
 
 }
 
-function drawToio(){
-  if(toiox[1] != toiox[0] || toioy[1] != toioy[0]){
-    console.log("toio moving");
+function cubePositionCalc(cube, a, value) {
 
-    var ypos = (toioy[0]/toiomax[1])*250;
-    var xpos = (toiox[0]/toiomax[0])*250;
-    document.getElementById("toio").style.left = (xpos).toString() + "px";
-    document.getElementById('toio').style.top = (ypos).toString() + "px";
-    console.log("moving to: x: " + xpos + " y: " + ypos);
+  var xoff = 32;
+  xoff = toiomin[0];
+  var yoff = 44;
+  yoff = toiomin[1];
+
+  if (cube.xpos[0] != undefined){
+  cube.xpos[1] = cube.xpos[0];
+  cube.ypos[1] = cube.ypos[0];
+  }
+
+  cube.xpos[0] = value.getInt16(1, true)-xoff;
+  cube.ypos[0] = value.getInt16(3, true)-yoff;
+
+  var xpos = (value.getInt16(1, true)).toString();
+  var ypos = (value.getInt16(3, true)).toString();
+  var angle = value.getInt16(5, true).toString();
+  //console.log("x: ", xpos, "y: ", ypos, "angle: ", angle);
+  document.getElementById("xpos").innerHTML = "x position: " + xpos;
+  document.getElementById("ypos").innerHTML = "y position: " + ypos;
+  document.getElementById("angle").innerHTML = "angle (degrees): " + angle;
+
+  var posArr = [cube.xpos[0], cube.ypos[0]];
+  return [xpos, ypos];
+  // console.log(xpos);
+  // console.log(ypos);
+}
+
+function handleNotifications2(event) {
+  let value = event.target.value;
+
+let a = [];
+// Convert raw data bytes to hex values just for the sake of showing something.
+// In the "real" world, you'd use data.getUint8, data.getUint16 or even
+// TextDecoder to process raw data bytes.
+for (let i = 0; i < value.byteLength; i++) {
+  a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+}
+
+  console.log('cube 2 position: ' + a);
+  cubePositionCalc(gCubes[1], a, value);
+
+  drawToio(1);
+}
+
+function handleNotifications3(event) {
+  let value = event.target.value;
+
+let a = [];
+// Convert raw data bytes to hex values just for the sake of showing something.
+// In the "real" world, you'd use data.getUint8, data.getUint16 or even
+// TextDecoder to process raw data bytes.
+for (let i = 0; i < value.byteLength; i++) {
+  a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+}
+
+  console.log('cube 3 position: ' + a);
+  cubePositionCalc(gCubes[2], a, value);
+
+  drawToio(2);
+
+}
+
+function drawToio(cubeno){
+  if(gCubes[cubeno].xpos[1] != gCubes[cubeno].xpos[0] || gCubes[cubeno].ypos[1] != gCubes[cubeno].ypos[0]){
+    // console.log("toio moving");
+
+    var ypos = ((gCubes[cubeno].ypos[0]/toiomax[1])*250)-cubeno*45;
+    var xpos = (gCubes[cubeno].xpos[0]/toiomax[0])*250;
+    document.querySelectorAll(".toio")[cubeno].style.left = (xpos).toString() + "px";
+    document.querySelectorAll(".toio")[cubeno].style.top = (ypos).toString() + "px";
+    // document.getElementById("toio").style.left = (xpos).toString() + "px";
+    // document.getElementById('toio').style.top = (ypos).toString() + "px";
+    // console.log("moving to: x: " + xpos + " y: " + ypos);
   }
 }
 
-function getMousePos(){
+function getMousePos(cube){
   const rect = event.target.getBoundingClientRect();
   var x = (event.clientX - rect.left)/250;
   var y = (event.clientY- rect.top)/250;
@@ -351,47 +412,17 @@ function getMousePos(){
   console.log(ygo);
   }
 
-//   var ymove = parseInt((290 * y) + 40);
-//   console.log("x: " + xmove + " y: "+ ymove);
-//   xmove = xmove.toString(16);
-//   ymove = ymove.toString(16);
-//   if(xmove.length ==3){
-//     xmove = "0" + xmove;
-//   }else if (xmove.length == 2){
-//     xmove = "00" + xmove;
-//   }
-//
-//   if(ymove.length ==3){
-//     ymove = "0" + ymove;
-//   }else if (ymove.length == 2){
-//     ymove = "00" + ymove;
-//   }
-//
-//   let xgo = [xmove.slice(2,4), xmove.slice(0,2)];
-//   let ygo = [ymove.slice(2,4), ymove.slice(0,2)];
-//   xgo[0] = "0x" + xgo[0];
-//   xgo[1] = "0x" + xgo[1];
-//   ygo[0] = "0x" + ygo[0];
-//   ygo[1] = "0x" + ygo[1];
-//   xmove = "0x" + xmove.toString(16);
-//   ymove = "0x" + ymove.toString(16);
-//
-//
-//
-//   console.log("x: " + xmove.toString(16) + " y: "+ ymove.toString(16));
-//
-   if (gCubes[0] != undefined){
+   if (cube != undefined){
 
        console.log("move cube to position");
        // console.log("x: " + xmove.toString(16) + " y: "+ ymove.toString(16));
-       cube = gCubes[0];
        var buf = new ArrayBuffer(10)
        var a8 = new Uint8Array(buf);
        var buf1 = new Uint8Array([ 0x03, 0x00, 0x05, 0x00, 0x50, 0x00, 0x00]);
        var buf4 = new Uint8Array([0x03,0x00,0x05,0x00,0x50,0x00, 0x00,xgo[0], xgo[1],ygo[0],ygo[1],0x5a,0x00]);
 
-      console.log(buf4);
-
+      // console.log(buf4);
+      //
         cube.moveChar.writeValue(buf4);
 
 
@@ -425,13 +456,13 @@ else{
 
             if( cubeId === 0 ){
                 gCubes[0] = connectNewCube();
-                console.log('cube 0 connected (cyan)');
+                console.log('cube 0 connecting (cyan)');
             }else if( cubeId === 1 ){
                 gCubes[1] = connectNewCube();
-                console.log('cube 1 connected (green)');
+                console.log('cube 1 connecting (green)');
             }else{
                 gCubes[2] = connectNewCube();
-                console.log('cube 3 connected (red)');
+                console.log('cube 3 connecting (red)');
             }
 
           });
@@ -441,13 +472,36 @@ else{
         onStartButtonClick();
       });
 
-      document.getElementById('canvas').addEventListener('click', async ev => {
-        getMousePos();
+      document.getElementById('canvas').addEventListener('click', function(e) {
+        if(e.target.id == "canvas"){
+        getMousePos(gCubes[activeRobot-1]);
+      }
       });
 
       document.getElementById('canvas').addEventListener('touchstart', async ev => {
-        getMousePos();
+        if(e.target.id == "canvas"){
+        getMousePos(gCubes[activeRobot-1]);
+      }
       });
+
+      document.getElementById('canvas').addEventListener('touchmove', function(e) {
+        if(e.target.id == "canvas"){
+        getMousePos(gCubes[activeRobot-1]);
+      }
+      });
+
+      for(i=0; i<document.querySelectorAll(".toio").length; i++){
+      document.querySelectorAll(".toio")[i].addEventListener("click", function(e){
+        console.log(e.target.id);
+        if(activeRobot != undefined){
+          document.getElementById("toio"+activeRobot).classList.toggle("selected");
+        }
+        activeRobot = e.target.id.slice(-1);
+
+        console.log("active robot: " + activeRobot);
+        e.target.classList.toggle("selected");
+      })
+    }
 
 
   }

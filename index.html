@@ -32,8 +32,8 @@
   <h2 id="connecttocube">Connect to Toio Core Cube</h2>
   <div class="operationContent">
     <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" id="btConnectCube1">Connect Cube 1</button>
-    <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" disabled id="btConnectCube2" style="visibility:hidden">Connect Cube 2</button>
-    <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" disabled id="btConnectCube3" style="visibility:hidden">Connect Cube 3</button>
+    <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" id="btConnectCube2">Connect Cube 2</button>
+    <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" id="btConnectCube3">Connect Cube 3</button>
   </div>
   <div class="position">
     <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" id="getPos" style="display:none">Get Position</button>
@@ -43,8 +43,17 @@
   </div>
 
   <div id="canvas">
-      <div id="toio">
+      <div class="toio selected" id="toio1">
         </div>
+        <div class="toio" id="toio2">
+        </div>
+        <div class="toio" id="toio3">
+        </div>
+  </div>
+
+  <div>
+    <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" id="CCW">Rotate CCW 45 Deg</button>
+    <button class="mui-btn mui-btn--small mui-btn--primary mui-btn--raised" id="CW">Rotate CW 45 Deg</button>
   </div>
 
     <script type="text/javascript" src="index.js"></script>
