@@ -109,6 +109,13 @@ h4{
   margin-top: -100px;
 }
 
+#btConnectCube2{
+  background-color:orange;
+}
+#btConnectCube3{
+  background-color: purple;
+}
+
 .position h3{
   display:inline;
   margin-right: 30px;
