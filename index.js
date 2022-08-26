@@ -39,7 +39,10 @@ let robotActive = true;
           lightChar:undefined,
           posChar: undefined,
           xpos: [0],
-          ypos: [0]
+          ypos: [0],
+          angle: undefined,
+          xpos_notadj: undefined,
+          ypos_notadj: undefined
       };
 
       // Scan only toio Core Cubes
@@ -226,6 +229,7 @@ let robotActive = true;
   }
 
   function onStartButtonClick(cube) {
+    //sensor id notification settings
     const buf1 = new Uint8Array([ 0x18, 0x00, 0x01, 0x01 ]);
     cube.posChar.writeValue(buf1);
     console.log(cube);
@@ -250,7 +254,7 @@ let robotActive = true;
 
 function handleNotifications1(event) {
   // let value = event.target.value;
-console.log("cube 1");
+// console.log("cube 1");
 
   let value = event.target.value;
 //  console.log(value);
@@ -263,19 +267,17 @@ for (let i = 0; i < value.byteLength; i++) {
   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
 }
 
-console.log(a);
+// console.log(a);
 cubePositionCalc(gCubes[0], a, value);
-
 drawToio(0);
 //console.log('> ' + a.join(' '));
 
 }
 
 function cubePositionCalc(cube, a, value) {
-
-  var xoff = 32;
+  var xoff;
   xoff = toiomin[0];
-  var yoff = 44;
+  var yoff;
   yoff = toiomin[1];
 
   if (cube.xpos[0] != undefined){
@@ -286,6 +288,8 @@ function cubePositionCalc(cube, a, value) {
   cube.xpos[0] = value.getInt16(1, true)-xoff;
   cube.ypos[0] = value.getInt16(3, true)-yoff;
 
+  cube.xpos_notadj = value.getInt16(1, true);
+  cube.ypos_notadj = value.getInt16(3, true);
   var xpos = (value.getInt16(1, true)).toString();
   var ypos = (value.getInt16(3, true)).toString();
   var angle = value.getInt16(5, true).toString();
@@ -293,7 +297,8 @@ function cubePositionCalc(cube, a, value) {
   document.getElementById("xpos").innerHTML = "x position: " + xpos;
   document.getElementById("ypos").innerHTML = "y position: " + ypos;
   document.getElementById("angle").innerHTML = "angle (degrees): " + angle;
-
+  cube.angle = angle;
+  // console.log(cube.angle);
   var posArr = [cube.xpos[0], cube.ypos[0]];
   return [xpos, ypos];
   // console.log(xpos);
@@ -330,7 +335,6 @@ for (let i = 0; i < value.byteLength; i++) {
 
   console.log('cube 3 position: ' + a);
   cubePositionCalc(gCubes[2], a, value);
-
   drawToio(2);
 
 }
@@ -343,7 +347,9 @@ function drawToio(cubeno){
     var xpos = (gCubes[cubeno].xpos[0]/toiomax[0])*250;
     document.querySelectorAll(".toio")[cubeno].style.left = (xpos).toString() + "px";
     document.querySelectorAll(".toio")[cubeno].style.top = (ypos).toString() + "px";
-    // document.getElementById("toio").style.left = (xpos).toString() + "px";
+    document.querySelectorAll(".toio")[cubeno].style.transform = "rotate("+ gCubes[cubeno].angle.toString() + "deg)";
+
+        // document.getElementById("toio").style.left = (xpos).toString() + "px";
     // document.getElementById('toio').style.top = (ypos).toString() + "px";
     // console.log("moving to: x: " + xpos + " y: " + ypos);
   }
@@ -362,55 +368,9 @@ function getMousePos(cube){
   let xgo;
   console.log('x move: ' + xmove + " , " + "y move: " + ymove);
 
-  if((xmove + toiomin[0]) > 255){
-    // xmove = xmove.toString();
-    xgo = [(xmove+toiomin[0])-255, "0x01"];
-    xgo = [xgo[0].toString(16), xgo[1]];
-      if(xgo[0] == 'NaN'){
-        xgo[0] = "0x00";
-      }else if(xgo[0].length ==1){
-      xgo[0] = "0x0" + xgo[0];
-    }else if(xgo[0].length >= 2){
-      xgo[0] = "0x" + xgo[0];
-    }
-    console.log(xgo);
-  }else{
-    xgo = [xmove+toiomin[0], "0x00"];
-    xgo = [xgo[0].toString(16), xgo[1]];
-    if(xgo[0] == 'NaN'){
-      xgo[0] = "0x00";
-    }else if(xgo[0].length ==1){
-    xgo[0] = "0x0" + xgo[0];
-  }else if(xgo[0].length >= 2){
-    xgo[0] = "0x" + xgo[0];
-  }
-  console.log(xgo);
-  }
 
-  if((ymove + toiomin[1]) > 255){
-    // xmove = xmove.toString();
-    ygo = [(ymove+toiomin[1])-255, "0x01"];
-    ygo = [ygo[0].toString(16), ygo[1]];
-      if(ygo[0] == 'NaN'){
-        ygo[0] = "0x00";
-      }else if(ygo[0].length ==1){
-      ygo[0] = "0x0" + ygo[0];
-    }else if(ygo[0].length >= 2){
-      ygo[0] = "0x" + ygo[0];
-    }
-    console.log(ygo);
-  }else{
-    ygo = [ymove+toiomin[1], "0x00"];
-    ygo = [ygo[0].toString(16), ygo[1]];
-    if(ygo[0] == 'NaN'){
-      ygo[0] = "0x00";
-    }else if(ygo[0].length ==1){
-    ygo[0] = "0x0" + ygo[0];
-  }else if(ygo[0].length >= 2){
-    ygo[0] = "0x" + ygo[0];
-  }
-  console.log(ygo);
-  }
+  xgo = toBits(xmove + toiomin[0]);
+  ygo = toBits(ymove + toiomin[1]);
 
    if (cube != undefined){
 
@@ -427,6 +387,71 @@ function getMousePos(cube){
 
 
 }
+}
+
+//input an int,
+//outputs array with length of 2
+
+function toBits(val){
+  console.log(val);
+  if(val > 255){
+    // xmove = xmove.toString();
+    valarr = [val-255, "0x01"];
+    valarr = [valarr[0].toString(16), valarr[1]];
+    // console.log(valarr);
+    if(valarr[0] == 'NaN'){
+        valarr[0] = "0x00";
+    }else if(valarr[0].length ==1){
+      valarr[0] = "0x0" + valarr[0];
+    }else if(valarr[0].length >= 2){
+      valarr[0] = "0x" + valarr[0];
+    }
+    // console.log(valarr);
+  }else{
+    valarr = [val, "0x00"];
+    console.log(valarr);
+    valarr = [valarr[0].toString(16), valarr[1]];
+    if(valarr[0] == 'NaN'){
+      valarr[0] = "0x00";
+    }else if(valarr[0].length ==1){
+    valarr[0] = "0x0" + valarr[0];
+  }else if(valarr[0].length >= 2){
+    valarr[0] = "0x" + valarr[0];
+  }
+
+  }
+  return valarr;
+}
+
+function rotateCube(cube, dir, d_ang){
+  console.log(cube);
+  console.log(cube.xpos_notadj);
+  console.log(cube.ypos_notadj);
+  let xgo = toBits(cube.xpos_notadj);
+  let ygo = toBits(cube.ypos_notadj);
+  let angle;
+  console.log(cube.angle);
+  if(dir == 0){
+    d_ang = -(d_ang);
+  }
+  if((parseInt(cube.angle)+d_ang)>360){
+    angle = (parseInt(cube.angle)+d_ang)-360;
+  }else if((parseInt(cube.angle)+d_ang)<=0){
+    console.log("less than zero");
+    console.log(parseInt(cube.angle)+d_ang);
+    angle = 360+(parseInt(cube.angle)+d_ang);
+  }else{
+    angle = parseInt(cube.angle)+d_ang;
+  }
+  if(angle == 0){
+    angle = 360;
+  }
+  console.log(angle);
+  angle = toBits(angle);
+  console.log(angle);
+  var buf = new Uint8Array([0x03,0x00,0x05,0x00,0x50,0x00, 0x00,xgo[0], xgo[1],ygo[0],ygo[1],angle[0],angle[1]]);
+  cube.moveChar.writeValue(buf);
+
 }
 
 function lightControl(on){
@@ -467,6 +492,22 @@ else{
 
           });
       }
+
+      document.getElementById("CCW45").addEventListener("click", function(e){
+        rotateCube(gCubes[activeRobot-1], 0, 45);
+      });
+
+      document.getElementById("CW45").addEventListener("click", function(e){
+        rotateCube(gCubes[activeRobot-1], 1, 45);
+      });
+
+      document.getElementById("CCW90").addEventListener("click", function(e){
+        rotateCube(gCubes[activeRobot-1], 0, 90);
+      });
+
+      document.getElementById("CW90").addEventListener("click", function(e){
+        rotateCube(gCubes[activeRobot-1], 1, 90);
+      });
 
       document.getElementById('getPos').addEventListener('mousedown', async ev => {
         onStartButtonClick();

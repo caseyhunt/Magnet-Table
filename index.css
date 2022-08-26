@@ -137,6 +137,11 @@ h4{
   position: relative;
   left: 20px;
   top: 20px;
+
+  text-align: center;
+  padding-top:2px;
+  color:white;
+  font-size: 30px;
 }
 
 #toio1{
