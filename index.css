@@ -11,6 +11,15 @@ body{
   padding-top: 2px;
 }
 
+#content{
+  display:grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto;
+  justify-content: space-around;
+  border: 1px black;
+  width:60vw;
+}
+
 #driving2{
   margin-top: 30px;
 }

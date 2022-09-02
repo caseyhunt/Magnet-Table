@@ -29,6 +29,14 @@ let robotActive = true;
   const LIGHT_CHARCTERISTICS_UUID = '10b20103-5b3b-4571-9508-cf3efcd7bbae';
   const POSITION_CHARACTERISTICS_UUID = '10b20101-5b3b-4571-9508-cf3efcd7bbae';
 
+
+
+
+
+
+
+
+//Connect toio
   const connectNewCube = () => {
       const cube = {
           device:undefined,
@@ -492,6 +500,40 @@ else{
 
           });
       }
+
+      document.getElementById("serial").addEventListener("click", async ev =>{
+        console.log("serial menu opening");
+        const port = await navigator.serial.requestPort();
+        // Wait for the serial port to open.
+        await port.open({ baudRate: 115200 });
+
+        while (port.readable) {
+          const textDecoder = new TextDecoderStream();
+          const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+          const reader = textDecoder.readable.getReader();
+          console.log(reader);
+          try {
+            while (true) {
+
+              const { value, done } = await reader.read();
+
+              if (done) {
+                // |reader| has been canceled.
+
+                break;
+              }
+              // Do something with |value|…
+              console.log(value);
+            }
+          } catch (error) {
+            // Handle |error|…
+          } finally {
+            reader.releaseLock();
+          }
+        }
+
+        }
+    )
 
       document.getElementById("CCW45").addEventListener("click", function(e){
         rotateCube(gCubes[activeRobot-1], 0, 45);
