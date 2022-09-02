@@ -8,9 +8,11 @@ const gCubes = [ undefined, undefined, undefined ];
 //'0xb3', '0x01', '0xb2', '0x01'
 //'0x43', '0x00', '0x3f', '0x00'
 
-var toiomax = [438, 438];
-var toiomin = [58, 60];
+var toiomax = [440, 440];
+var toiomin = [50, 50];
 
+var toiomax_draw = [toiomax[0]-40, toiomax[1]-40];
+var toiomin_draw = [toiomin[0]+15, toiomin[1]+15];
 
 var xmax = 308;
 var ymax = 212;
@@ -31,7 +33,7 @@ let robotActive = true;
 
 
 
-
+var toioSize = 25;
 
 
 
@@ -284,9 +286,9 @@ drawToio(0);
 
 function cubePositionCalc(cube, a, value) {
   var xoff;
-  xoff = toiomin[0];
+  xoff = toiomin_draw[0];
   var yoff;
-  yoff = toiomin[1];
+  yoff = toiomin_draw[1];
 
   if (cube.xpos[0] != undefined){
   cube.xpos[1] = cube.xpos[0];
@@ -351,8 +353,8 @@ function drawToio(cubeno){
   if(gCubes[cubeno].xpos[1] != gCubes[cubeno].xpos[0] || gCubes[cubeno].ypos[1] != gCubes[cubeno].ypos[0]){
     // console.log("toio moving");
 
-    var ypos = ((gCubes[cubeno].ypos[0]/toiomax[1])*250)-cubeno*45;
-    var xpos = (gCubes[cubeno].xpos[0]/toiomax[0])*250;
+    var ypos = ((gCubes[cubeno].ypos[0]/toiomax_draw[1])*250)-cubeno*toioSize;
+    var xpos = (gCubes[cubeno].xpos[0]/toiomax_draw[0])*250;
     document.querySelectorAll(".toio")[cubeno].style.left = (xpos).toString() + "px";
     document.querySelectorAll(".toio")[cubeno].style.top = (ypos).toString() + "px";
     document.querySelectorAll(".toio")[cubeno].style.transform = "rotate("+ gCubes[cubeno].angle.toString() + "deg)";
@@ -371,7 +373,7 @@ function getMousePos(cube){
   var xdiff = toiomax[0]-toiomin[0];
   var xmove = parseInt(x*xdiff);
   var ydiff = toiomax[1] - toiomin[1];
-  var ymove = parseInt(y*ydiff);
+  var ymove = parseInt(y*ydiff)+5;
   let ygo;
   let xgo;
   console.log('x move: ' + xmove + " , " + "y move: " + ymove);
