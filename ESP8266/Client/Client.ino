@@ -20,10 +20,19 @@ void setup() {
 
  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
+    Serial.println(".");
+    WiFiClient client;
+    HTTPClient Post;
+    Post.begin(client, "http://192.168.4.1/");   // pass Server IP Address here
+    Post.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    Post.GET();
+    delay(10);
+    String payload = Post.getString();
+    Serial.println(payload);
+    Post.end();
   }
 
-  Serial.println("");
+//  Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP()); 
@@ -41,5 +50,5 @@ void loop() {
     Serial.println(payload);
     Post.end();
   } 
-  delay(100);  
+  delay(5000);  
 }
