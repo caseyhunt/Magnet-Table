@@ -41,6 +41,12 @@ void handleRoot(){
   Serial.println(message);
 }
 
+void handleServo(){
+  String message = "<" + String(motorpos) + ">";
+  server.send(200, "text/plain", message);
+  Serial.println(message);
+}
+
 void setup(void){
    servo.attach(D4);
    servo.write(0);
@@ -57,13 +63,14 @@ void setup(void){
   server.on("/body", handleBody);
 
   server.on("/", handleRoot);
+
+  server.on("/servo", handleServo);
   
   server.begin();
   Serial.println("Web server started!");
 }
  
 void loop(void){
-  
   while(Serial.available() > 0){
     inByte = Serial.read();
     if(inByte == '<'){
@@ -80,18 +87,11 @@ void loop(void){
   }
 
   if(started && ended){
-//    Serial.println(String(motorpos, HEX));
-      if(motorpos == '1'){
-        servo.write(180);
-        
-      }else if(motorpos == '0'){
-        servo.write(0);
-      }
+    
     started = false;
     ended = false;
   }
   
   server.handleClient();
-
   
 }

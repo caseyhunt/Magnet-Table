@@ -30,6 +30,7 @@ let robotActive = true;
   const SOUND_CHARCTERISTICS_UUID = '10b20104-5b3b-4571-9508-cf3efcd7bbae';
   const LIGHT_CHARCTERISTICS_UUID = '10b20103-5b3b-4571-9508-cf3efcd7bbae';
   const POSITION_CHARACTERISTICS_UUID = '10b20101-5b3b-4571-9508-cf3efcd7bbae';
+  const SENSOR_CHARACTERISTICS_UUID = '10b20106-5b3b-4571-9508-cf3efcd7bbae';
 
 
 
@@ -48,6 +49,7 @@ var toioSize = 25;
           moveChar:undefined,
           lightChar:undefined,
           posChar: undefined,
+          senChar:undefined,
           xpos: [0],
           ypos: [0],
           angle: undefined,
@@ -90,6 +92,9 @@ var toioSize = 25;
           return cube.service.getCharacteristic( LIGHT_CHARCTERISTICS_UUID );
       }).then( characteristic => {
           cube.lightChar = characteristic;
+          return cube.service.getCharacteristic( SENSOR_CHARACTERISTICS_UUID );
+      }).then( characteristic => {
+          cube.senChar = characteristic;
           return cube.service.getCharacteristic( POSITION_CHARACTERISTICS_UUID );
       }).then( characteristic => {
           cube.posChar = characteristic;
@@ -173,6 +178,7 @@ var toioSize = 25;
           console.log('spin');
       }
           onStartButtonClick(cube);
+          startMagnetSensing(cube);
 
   }
 
@@ -240,26 +246,65 @@ var toioSize = 25;
 
   function onStartButtonClick(cube) {
     //sensor id notification settings
-    const buf1 = new Uint8Array([ 0x18, 0x00, 0x01, 0x01 ]);
-    cube.posChar.writeValue(buf1);
+    // const buf1 = new Uint8Array([ 0x18, 0x00, 0x01, 0x01 ]);
+    // cube.posChar.writeValue(buf1);
+    const buf2 = new Uint8Array([0x1b,0x00,0x01,0x01,0x01]);
+    cube.senChar.writeValue(buf2);
+
     console.log(cube);
-    //posCharacteristic = gCubes[0].posChar.readValue();
-    //console.log(posCharacteristic);
-    return cube.posChar.startNotifications().then(_ => {
-      console.log('> Notifications started');
+    // posCharacteristic = gCubes[0].posChar.readValue();
+    // console.log(posCharacteristic);
+    return cube.senChar.startNotifications().then(_ => {
+      console.log('> Position Notifications started');
       if(cube == gCubes[0]){
-      cube.posChar.addEventListener('characteristicvaluechanged',
-          handleNotifications1);
+      cube.senChar.addEventListener('characteristicvaluechanged',
+        handleSensorNotifications);
+          //handleNotifications1);
   }else if(cube == gCubes[1]){
-    cube.posChar.addEventListener('characteristicvaluechanged',
+    cube.senChar.addEventListener('characteristicvaluechanged',
         handleNotifications2);
   }else{
-    cube.posChar.addEventListener('characteristicvaluechanged',
+    cube.senChar.addEventListener('characteristicvaluechanged',
         handleNotifications3);
   }})
   .catch(error => {
     console.log('Argh! ' + error);
   });
+
+
+}
+
+function startMagnetSensing(cube){
+  const buf2 = new Uint8Array([0x03, 0x01]);
+  cube.senChar.writeValue(buf2);
+  console.log("magnet sensing");
+  return cube.senChar.startNotifications().then(_ => {
+    console.log('> Sensor Notifications started');
+    if(cube == gCubes[0]){
+    cube.senChar.addEventListener('characteristicvaluechanged',
+        handleSensorNotifications);
+}else if(cube == gCubes[1]){
+  cube.senChar.addEventListener('characteristicvaluechanged',
+      handleSensorNotifications);
+}else{
+  cube.senChar.addEventListener('characteristicvaluechanged',
+      handleSensorNotifications);
+}})
+.catch(error => {
+  console.log('Argh! ' + error);
+});
+}
+
+function handleSensorNotifications(event){
+  let value = event.target.value;
+  console.log(value.getInt16(4, true));
+  let a = [];
+
+  for (let i = 0; i < value.byteLength; i++) {
+    a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+  }
+
+  console.log("magnet:" + a);
 }
 
 function handleNotifications1(event) {
@@ -537,6 +582,8 @@ else{
         }
     )
 
+
+
       document.getElementById("CCW45").addEventListener("click", function(e){
         rotateCube(gCubes[activeRobot-1], 0, 45);
       });
@@ -551,10 +598,6 @@ else{
 
       document.getElementById("CW90").addEventListener("click", function(e){
         rotateCube(gCubes[activeRobot-1], 1, 90);
-      });
-
-      document.getElementById('getPos').addEventListener('mousedown', async ev => {
-        onStartButtonClick();
       });
 
       document.getElementById('canvas').addEventListener('click', function(e) {
