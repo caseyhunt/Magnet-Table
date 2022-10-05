@@ -580,6 +580,18 @@ else{
         }
 
         }
+
+        document.getElementById("moveup").addEventListener("click", async ev =>{
+          const writer = port.writable.getWriter();
+          const data = "<1>";
+          await writer.write(data);
+        })
+
+        document.getElementById("movedown").addEventListener("click", async ev =>{
+          const writer = port.writable.getWriter();
+          const data = "<0>";
+          await writer.write(data);
+        })
     )
 
 
