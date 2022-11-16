@@ -17,13 +17,15 @@ const char* host = "192.168.4.1";  //Server IP Address here
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 String rfid;
+String old_rfid;
+bool new_rfid = false;
+String payload;
 
 Servo servo;
 
 void setup() {
   Serial.begin(115200);
   delay(100);
-
   servo.attach(D1);
   servo.write(180);
   delay(10);
@@ -49,7 +51,7 @@ void setup() {
     Post.addHeader("Content-Type", "application/x-www-form-urlencoded");
     Post.GET();
     delay(10);
-    String payload = Post.getString();
+    payload = Post.getString();
     Serial.println(payload);
     Post.end();
   }
@@ -62,17 +64,22 @@ void setup() {
 
 void loop() {
 
-  
+  printHex(mfrc522.uid.uidByte, mfrc522.uid.size);
+
+    Serial.print("new rfid ");
+  Serial.println(new_rfid);
   if (WiFi.status() == WL_CONNECTED) { //Check WiFi connection status
     WiFiClient client;
+    if(new_rfid == true){
     HTTPClient Post;
     Post.begin(client, "http://192.168.4.1/body");   // pass Server IP Address here
     Post.addHeader("Content-Type", "application/x-www-form-urlencoded");
     Post.POST("data=" + rfid);
     delay(10);
-    String payload = Post.getString();
+   String payload = Post.getString();
     Serial.println(payload);
     Post.end();
+    }
     
     HTTPClient Get;
     Get.begin(client, "http://192.168.4.1/servo");   // pass Server IP Address here
@@ -87,7 +94,7 @@ void loop() {
       servo.write(0); 
     }
     Get.end();
-  } 
+  }
 
   
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
@@ -100,20 +107,33 @@ void loop() {
     return;
   }
 
-  printHex(mfrc522.uid.uidByte, mfrc522.uid.size);
-  
+  rfid = "";
+
   delay(500);  
 }
 
 
+
 void printHex(byte *buffer, byte bufferSize) {
   rfid = "";
+  
   for (byte i = 0; i < bufferSize; i++) {
-//    Serial.print(buffer[i] < 0x10 ? " 0" : " ");
-//    Serial.print(buffer[i], HEX);
+    Serial.print(buffer[i] < 0x10 ? " 0" : " ");
+    Serial.print(buffer[i], HEX);
     rfid += buffer[i] < 0x10 ? " 0" : " ";
     rfid += String(buffer[i], HEX);
   }
+  isNew(rfid);
+  old_rfid = rfid;
   Serial.println();
-  //Serial.print(rfid);
+  Serial.print("rfid");
+  Serial.print(rfid);
+}
+
+void isNew(String rfid){
+  if(old_rfid == rfid){
+    new_rfid = false;
+  }else{
+    new_rfid = true;
+  }
 }

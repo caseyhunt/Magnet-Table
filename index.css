@@ -187,3 +187,11 @@ background-repeat: no-repeat;
 #light{
   margin-bottom: 40px;
 }
+
+.object {
+  position: relative;
+    width: 20px;
+    height: 20px;
+    border-radius: 100px;
+    border: black solid 1px;
+  }

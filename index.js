@@ -1,3 +1,5 @@
+let port;
+
 
 const CUBE_ID_ARRAY = [ 0, 1, 2 ];
 const SUPPORT_CUBE_NUM = CUBE_ID_ARRAY.length;
@@ -24,6 +26,9 @@ var speed1 = 0xFF;
 
 let activeRobot = 1;
 let robotActive = true;
+
+let xcoord;
+let ycoord;
 
   const SERVICE_UUID              = '10b20100-5b3b-4571-9508-cf3efcd7bbae';
   const MOVE_CHARCTERISTICS_UUID = '10b20102-5b3b-4571-9508-cf3efcd7bbae';
@@ -67,7 +72,7 @@ var toioSize = 25;
       navigator.bluetooth.requestDevice( options ).then( device => {
           cube.device = device;
           if( cube === gCubes[0] ){
-              console.log(cube);
+              //console.log(cube);
               turnOnLightCian( cube );
               const cubeID = 1;
               changeConnectCubeButtonStatus( cubeID, undefined, true );
@@ -178,7 +183,7 @@ var toioSize = 25;
           console.log('spin');
       }
           onStartButtonClick(cube);
-          startMagnetSensing(cube);
+          // startMagnetSensing(cube);
 
   }
 
@@ -216,7 +221,7 @@ var toioSize = 25;
       var buf = new Uint8Array([ 0x01, 0x01, 0x01, 0x64, 0x02, 0x01, 0x64]);
       // forward
 
-      console.log(speed);
+      //console.log(speed);
       if(moveID==1){
       buf = new Uint8Array([ 0x01, 0x01, 0x01, speed, 0x02, 0x01, speed]);
     }else if (moveID==2){
@@ -230,7 +235,7 @@ var toioSize = 25;
     }
       if( ( cube !== undefined ) && ( cube.moveChar !== undefined ) ){
           cube.moveChar.writeValue( buf );
-          console.log('move');
+          //console.log('move');
       }
 
   }
@@ -240,75 +245,45 @@ var toioSize = 25;
       const buf = new Uint8Array([ 0x01, 0x01, 0x01, 0x00, 0x02, 0x01, 0x00]);
       if( ( cube !== undefined ) && ( cube.moveChar !== undefined ) ){
           setTimeout(() => {cube.moveChar.writeValue( buf )},100);
-          console.log('stop');
+          //console.log('stop');
       }
   }
 
   function onStartButtonClick(cube) {
-    //sensor id notification settings
-    // const buf1 = new Uint8Array([ 0x18, 0x00, 0x01, 0x01 ]);
-    // cube.posChar.writeValue(buf1);
-    const buf2 = new Uint8Array([0x1b,0x00,0x01,0x01,0x01]);
-    cube.senChar.writeValue(buf2);
-
-    console.log(cube);
-    // posCharacteristic = gCubes[0].posChar.readValue();
-    // console.log(posCharacteristic);
-    return cube.senChar.startNotifications().then(_ => {
+    const buf1 = new Uint8Array([ 0x18, 0x00, 0x01, 0x01 ]);
+    const buf2 = new Uint8Array([ 0x1d, 0x00, 0x01, 0x01, 0x01 ]);
+    if(cube != undefined){
+    cube.posChar.writeValue(buf1);
+    //posCharacteristic = gCubes[0].posChar.readValue();
+    //console.log(posCharacteristic);
+    return cube.posChar.startNotifications().then(_ => {
       console.log('> Position Notifications started');
-      if(cube == gCubes[0]){
-      cube.senChar.addEventListener('characteristicvaluechanged',
-        handleSensorNotifications);
-          //handleNotifications1);
-  }else if(cube == gCubes[1]){
-    cube.senChar.addEventListener('characteristicvaluechanged',
-        handleNotifications2);
-  }else{
-    cube.senChar.addEventListener('characteristicvaluechanged',
-        handleNotifications3);
-  }})
+    if(cube == gCubes[0]){
+    cube.posChar.addEventListener('characteristicvaluechanged',
+        handleNotifications1);
+      // handleSensorNotifications);
+
+    }else if(cube == gCubes[1]){
+    cube.posChar.addEventListener('characteristicvaluechanged',
+      handleNotifications2);
+    }else{
+    cube.posChar.addEventListener('characteristicvaluechanged',
+      handleNotifications3);
+    }})
   .catch(error => {
     console.log('Argh! ' + error);
   });
+}
 
 
 }
 
-function startMagnetSensing(cube){
-  const buf2 = new Uint8Array([0x03, 0x01]);
-  cube.senChar.writeValue(buf2);
-  console.log("magnet sensing");
-  return cube.senChar.startNotifications().then(_ => {
-    console.log('> Sensor Notifications started');
-    if(cube == gCubes[0]){
-    cube.senChar.addEventListener('characteristicvaluechanged',
-        handleSensorNotifications);
-}else if(cube == gCubes[1]){
-  cube.senChar.addEventListener('characteristicvaluechanged',
-      handleSensorNotifications);
-}else{
-  cube.senChar.addEventListener('characteristicvaluechanged',
-      handleSensorNotifications);
-}})
-.catch(error => {
-  console.log('Argh! ' + error);
-});
-}
 
-function handleSensorNotifications(event){
-  let value = event.target.value;
-  console.log(value.getInt16(4, true));
-  let a = [];
 
-  for (let i = 0; i < value.byteLength; i++) {
-    a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
-  }
 
-  console.log("magnet:" + a);
-}
 
 function handleNotifications1(event) {
-  // let value = event.target.value;
+
 // console.log("cube 1");
 
   let value = event.target.value;
@@ -322,7 +297,11 @@ for (let i = 0; i < value.byteLength; i++) {
   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
 }
 
+//console.log(a);
 // console.log(a);
+
+
+
 cubePositionCalc(gCubes[0], a, value);
 drawToio(0);
 //console.log('> ' + a.join(' '));
@@ -347,7 +326,9 @@ function cubePositionCalc(cube, a, value) {
   cube.ypos_notadj = value.getInt16(3, true);
   var xpos = (value.getInt16(1, true)).toString();
   var ypos = (value.getInt16(3, true)).toString();
-  var angle = value.getInt16(5, true).toString();
+  var angle = (value.getInt16(5, true)).toString();
+
+
   //console.log("x: ", xpos, "y: ", ypos, "angle: ", angle);
   document.getElementById("xpos").innerHTML = "x position: " + xpos;
   document.getElementById("ypos").innerHTML = "y position: " + ypos;
@@ -371,7 +352,7 @@ for (let i = 0; i < value.byteLength; i++) {
   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
 }
 
-  console.log('cube 2 position: ' + a);
+  // console.log('cube 2 position: ' + a);
   cubePositionCalc(gCubes[1], a, value);
 
   drawToio(1);
@@ -388,7 +369,7 @@ for (let i = 0; i < value.byteLength; i++) {
   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
 }
 
-  console.log('cube 3 position: ' + a);
+  //console.log('cube 3 position: ' + a);
   cubePositionCalc(gCubes[2], a, value);
   drawToio(2);
 
@@ -400,6 +381,8 @@ function drawToio(cubeno){
 
     var ypos = ((gCubes[cubeno].ypos[0]/toiomax_draw[1])*250)-cubeno*toioSize;
     var xpos = (gCubes[cubeno].xpos[0]/toiomax_draw[0])*250;
+    xcoord = xpos;
+    ycoord = ypos;
     document.querySelectorAll(".toio")[cubeno].style.left = (xpos).toString() + "px";
     document.querySelectorAll(".toio")[cubeno].style.top = (ypos).toString() + "px";
     document.querySelectorAll(".toio")[cubeno].style.transform = "rotate("+ gCubes[cubeno].angle.toString() + "deg)";
@@ -414,14 +397,14 @@ function getMousePos(cube){
   const rect = event.target.getBoundingClientRect();
   var x = (event.clientX - rect.left)/250;
   var y = (event.clientY- rect.top)/250;
-  console.log("mouse click x : " + x + " y : " + y);
+  //console.log("mouse click x : " + x + " y : " + y);
   var xdiff = toiomax[0]-toiomin[0];
   var xmove = parseInt(x*xdiff);
   var ydiff = toiomax[1] - toiomin[1];
   var ymove = parseInt(y*ydiff)+5;
   let ygo;
   let xgo;
-  console.log('x move: ' + xmove + " , " + "y move: " + ymove);
+  //console.log('x move: ' + xmove + " , " + "y move: " + ymove);
 
 
   xgo = toBits(xmove + toiomin[0]);
@@ -429,7 +412,7 @@ function getMousePos(cube){
 
    if (cube != undefined){
 
-       console.log("move cube to position");
+       //console.log("move cube to position");
        // console.log("x: " + xmove.toString(16) + " y: "+ ymove.toString(16));
        var buf = new ArrayBuffer(10)
        var a8 = new Uint8Array(buf);
@@ -448,7 +431,7 @@ function getMousePos(cube){
 //outputs array with length of 2
 
 function toBits(val){
-  console.log(val);
+  //console.log(val);
   if(val > 255){
     // xmove = xmove.toString();
     valarr = [val-255, "0x01"];
@@ -464,7 +447,7 @@ function toBits(val){
     // console.log(valarr);
   }else{
     valarr = [val, "0x00"];
-    console.log(valarr);
+    //console.log(valarr);
     valarr = [valarr[0].toString(16), valarr[1]];
     if(valarr[0] == 'NaN'){
       valarr[0] = "0x00";
@@ -479,21 +462,21 @@ function toBits(val){
 }
 
 function rotateCube(cube, dir, d_ang){
-  console.log(cube);
-  console.log(cube.xpos_notadj);
-  console.log(cube.ypos_notadj);
+  //console.log(cube);
+  //console.log(cube.xpos_notadj);
+  //console.log(cube.ypos_notadj);
   let xgo = toBits(cube.xpos_notadj);
   let ygo = toBits(cube.ypos_notadj);
   let angle;
-  console.log(cube.angle);
+  //console.log(cube.angle);
   if(dir == 0){
     d_ang = -(d_ang);
   }
   if((parseInt(cube.angle)+d_ang)>360){
     angle = (parseInt(cube.angle)+d_ang)-360;
   }else if((parseInt(cube.angle)+d_ang)<=0){
-    console.log("less than zero");
-    console.log(parseInt(cube.angle)+d_ang);
+    //console.log("less than zero");
+    //console.log(parseInt(cube.angle)+d_ang);
     angle = 360+(parseInt(cube.angle)+d_ang);
   }else{
     angle = parseInt(cube.angle)+d_ang;
@@ -501,27 +484,27 @@ function rotateCube(cube, dir, d_ang){
   if(angle == 0){
     angle = 360;
   }
-  console.log(angle);
+  //console.log(angle);
   angle = toBits(angle);
-  console.log(angle);
+  //console.log(angle);
   var buf = new Uint8Array([0x03,0x00,0x05,0x00,0x50,0x00, 0x00,xgo[0], xgo[1],ygo[0],ygo[1],angle[0],angle[1]]);
   cube.moveChar.writeValue(buf);
 
 }
 
 function lightControl(on){
-  console.log(on);
+  //console.log(on);
   cube = gCubes[0];
 if( ( cube !== undefined ) && ( cube.lightChar !== undefined ) ){
   if(on == true){
     const buf = new Uint8Array([ 0x03, 0x00, 0x01, 0x01, 0xFF, 0xFF, 0xFF]);
     cube.lightChar.writeValue( buf );
-    console.log('light on');
+    //console.log('light on');
 }
 else{
   const buf = new Uint8Array([ 0x03, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00]);
   cube.lightChar.writeValue( buf );
-  console.log('light off');
+  //console.log('light off');
 }
 }
 }
@@ -550,9 +533,10 @@ else{
 
       document.getElementById("serial").addEventListener("click", async ev =>{
         console.log("serial menu opening");
-        const port = await navigator.serial.requestPort();
+        port = await navigator.serial.requestPort();
         // Wait for the serial port to open.
         await port.open({ baudRate: 115200 });
+        console.log(port);
 
         while (port.readable) {
           const textDecoder = new TextDecoderStream();
@@ -570,7 +554,8 @@ else{
                 break;
               }
               // Do something with |value|…
-              console.log(value);
+
+              isRFID(value);
             }
           } catch (error) {
             // Handle |error|…
@@ -578,21 +563,29 @@ else{
             reader.releaseLock();
           }
         }
+      })
 
-        }
 
+          var enc = new TextEncoder(); // always utf-8
         document.getElementById("moveup").addEventListener("click", async ev =>{
-          const writer = port.writable.getWriter();
-          const data = "<1>";
-          await writer.write(data);
+          const data = enc.encode("<1>");
+          // const data = "<1>";
+          // const data = "<1>";
+            writeserial(data).then(writer =>{
+              console.log("releasing lock");
+              writer.releaseLock();
+            });
         })
-
+        //
         document.getElementById("movedown").addEventListener("click", async ev =>{
-          const writer = port.writable.getWriter();
-          const data = "<0>";
-          await writer.write(data);
-        })
-    )
+
+          const data = enc.encode("<0>");
+          // const data = "<1>";
+            writeserial(data).then(writer =>{
+              console.log("releasing lock");
+              writer.releaseLock();
+            });
+      })
 
 
 
@@ -632,13 +625,13 @@ else{
 
       for(i=0; i<document.querySelectorAll(".toio").length; i++){
       document.querySelectorAll(".toio")[i].addEventListener("click", function(e){
-        console.log(e.target.id);
+        //console.log(e.target.id);
         if(activeRobot != undefined){
           document.getElementById("toio"+activeRobot).classList.toggle("selected");
         }
         activeRobot = e.target.id.slice(-1);
 
-        console.log("active robot: " + activeRobot);
+        //console.log("active robot: " + activeRobot);
         e.target.classList.toggle("selected");
       })
     }
@@ -654,6 +647,49 @@ else{
   // console.log(speed1);
   // }
 
+  async function writeserial(message) {
+    while(port.writable){
+    const writer = port.writable.getWriter();
+    await writer.write(message);
+    return writer;
+  }
+  }
 
+let rfid = [];
+function isRFID(value){
+  // console.log(value);
+  // console.log(value.substring(0, value.indexOf(":")+1));
+  //recieved data is a substring of the data sent by the server wemos
+  let data_r = value.substring(value.indexOf(":")+1, value.length);
+      // console.log(data_r.length);
+
+  if(data_r.substring(0,1) == "<"){
+      if(data_r.length == 3 || data_r.length ==6){
+    // console.log("servo position = " + data_r);
+    if(data_r.substring(1,2)=="1" || data_r.substring(1,3)=="49"){
+      console.log("servo is up");
+    }else if(data_r.substring(1,2)=="0" || data_r.substring(1,3)=="48"){
+      console.log("servo is down");
+    }
+  }}else if(data_r.length>5){
+    document.getElementById("rfid").innerHTML += data_r + "<br>";
+    console.log("rfid value = " + data_r);
+    document.getElementById("canvas").innerHTML += "<div class='object'></div>";
+    console.log(document.querySelectorAll(".object").length-1);
+    let obj_n = document.querySelectorAll(".object").length-1;
+    console.log(xcoord);
+    ycoord = ycoord-(toioSize*3);
+    ycoord = ycoord-(20*obj_n);
+    if(xcoord != undefined && ycoord != undefined){
+      console.log(xcoord);
+      console.log(ycoord);
+
+    document.querySelectorAll(".object")[obj_n].style.left = (xcoord).toString() + "px";
+    document.querySelectorAll(".object")[obj_n].style.top = (ycoord).toString() + "px";
+  }
+    rfid[0] = data_r;
+
+  }
+}
 
   initialize();

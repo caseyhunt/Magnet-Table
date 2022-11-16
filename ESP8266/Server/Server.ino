@@ -27,10 +27,11 @@ void handleBody(){
     Serial.println(message);
     //return;
   }else{
-    String message = "Body received:\n";
+    String message = "";
     message += server.arg("data");
     message += "\n";
     server.send(200, "text/plain", message);
+//    Serial.print("message:");
     Serial.println(message);
   }
 }
@@ -44,7 +45,7 @@ void handleRoot(){
 void handleServo(){
   String message = "<" + String(motorpos) + ">";
   server.send(200, "text/plain", message);
-  Serial.println(message);
+  //Serial.println(message);
 }
 
 void setup(void){
